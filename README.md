@@ -1,2 +1,2 @@
-# form.github.io
+# japanTrip.github.io
 create a form
