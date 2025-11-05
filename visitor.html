@@ -205,25 +205,29 @@
           submitBtn.textContent = 'Submitting...';
 
           // Submit using google.script.run
-          google.script.run
-            .withSuccessHandler(function(response) {
-              submitBtn.disabled = false;
-              submitBtn.textContent = originalText;
-              
-              if (response.result === 'success') {
-                alert('Form submitted successfully!');
-                document.getElementById('myForm').reset();
-                dateInput.value = todayDate;
-              } else {
-                alert('Error: ' + (response.message || 'Unknown error'));
-              }
-            })
-            .withFailureHandler(function(error) {
-              submitBtn.disabled = false;
-              submitBtn.textContent = originalText;
-              alert('An error occurred: ' + error.message);
-            })
-            .submitForm(formData);
+          // Submit to Google Apps Script Web App
+          const SCRIPT_URL = 'https://script.google.com/a/macros/ebara.com/s/AKfycbxaZLEW9z07fOwi5uodHmjIvfDTbns1WgMjy3KzGj3zSf_65gfv-4x4Yx1QwaC7-wnYUQ/exec'; // Paste your deployed Web App URL here
+          
+          fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+          })
+          .then(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+            alert('Form submitted successfully!');
+            document.getElementById('myForm').reset();
+            dateInput.value = todayDate;
+          })
+          .catch(error => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+            alert('An error occurred: ' + error.message);
+          });
         });
       });
     </script>
