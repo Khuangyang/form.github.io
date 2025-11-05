@@ -205,25 +205,28 @@
           submitBtn.textContent = 'Submitting...';
 
           // Submit using google.script.run
-          google.script.run
-            .withSuccessHandler(function(response) {
-              submitBtn.disabled = false;
-              submitBtn.textContent = originalText;
-              
-              if (response.result === 'success') {
-                alert('Form submitted successfully!');
-                document.getElementById('myForm').reset();
-                dateInput.value = todayDate;
-              } else {
-                alert('Error: ' + (response.message || 'Unknown error'));
-              }
-            })
-            .withFailureHandler(function(error) {
-              submitBtn.disabled = false;
-              submitBtn.textContent = originalText;
-              alert('An error occurred: ' + error.message);
-            })
-            .submitForm(formData);
+          const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxkuo4NVsZ7Q_Iw975qy8Cl9aYtb7LPOTwTZhLOfOLqEtt6PY-QKvrik61ORRHw36Xyyw/exec'; // Paste your deployed Web App URL here
+          
+          fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+          })
+          .then(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+            alert('Form submitted successfully!');
+            document.getElementById('myForm').reset();
+            dateInput.value = todayDate;
+          })
+          .catch(error => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+            alert('An error occurred: ' + error.message);
+          });
         });
       });
     </script>
