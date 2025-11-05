@@ -1,2 +1,2 @@
 # japanTrip.github.io
-create a form
+Japan Trip Blogger
