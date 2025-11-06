@@ -349,12 +349,14 @@
       $(document).on("click", ".add", function(){
         var empty = false;
         var input = $(this).parents("tr").find('input[type="text"]');
+        var rowData = {}; 
         input.each(function(){
           if(!$(this).val()){
             $(this).addClass("error");
             empty = true;
           } else{
             $(this).removeClass("error");
+            rowData[$(this).attr('name')] = $(this).val();
           }
         });
         $(this).parents("tr").find(".error").first().focus();
@@ -364,9 +366,29 @@
           });			
           $(this).parents("tr").find(".add, .edit").toggle();
           $(".add-new").removeAttr("disabled");
+          sendDataToGoogleSheets(rowData);
         }		
       });
-      
+      function sendDataToGoogleSheets(data) {
+            $.ajax({
+                url: "https://script.google.com/macros/s/AKfycbxkuo4NVsZ7Q_Iw975qy8Cl9aYtb7LPOTwTZhLOfOLqEtt6PY-QKvrik61ORRHw36Xyyw/exec",
+                method: "POST",
+                dataType: "json",
+                data: data, // The rowData object is sent here
+                success: function(response) {
+                    console.log("Server Response:", response);
+                    if (response.result === "success") {
+                        alert("Row successfully saved to Google Sheet!");
+                    } else {
+                        alert("Failed to save data.");
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error:", status, error);
+                    alert("An error occurred during submission.");
+                }
+            });
+        }
       // Edit row
       $(document).on("click", ".edit", function(){		
         $(this).parents("tr").find("td:not(:last-child)").each(function(){
