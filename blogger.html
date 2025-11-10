@@ -157,10 +157,10 @@
               <input type="text" id="location" class="form-control">
             </td>
             <td>
-              <input type="text" class="form-control">
+              <input type="text" id="category" class="form-control">
             </td>
             <td>
-              <input type="number" class="form-control">
+              <input type="number" id="rating" class="form-control">
             </td>
             <td>
               <button class="btn btn-outline-success addRowBtn">add</button>
@@ -181,6 +181,8 @@
           $(".addRowBtn").on("click", function () {
               var place = $("#place").val();
               var location = $("#location").val();
+              var category = $("#category").val();
+              var rating = $("#rating").val();
       
               if (place !== "" && location !== "") {
                   // Send data to Google Apps Script
@@ -189,7 +191,9 @@
                       data: JSON.stringify({
                           action: "add",
                           place: place,
-                          location: location
+                          location: location,
+                          category: category,
+                          rating: rating,
                       }),
                       type: "POST",
                       contentType: "application/json",
