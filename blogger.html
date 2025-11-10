@@ -196,7 +196,8 @@
                           rating: rating,
                       }),
                       type: "POST",
-                      contentType: "application/json",
+                      contentType: "text/plain;charset=utf-8", 
+                      redirect: "follow", 
                       success: function (response) {
                           console.log("Success:", response);
                       },
