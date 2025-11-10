@@ -142,23 +142,19 @@
       <table id="add_table" class="table" data-toggle="table" data-mobile-responsive="true">
         <thead>
           <tr>
-            <th>Name</th>
+            <th>Place</th>
             <th>Location</th>
             <th>Category</th>
             <th>Rating</th>
-            <th>
-              <button class="btn btn-outline-success" id="add_row" class="add"> add 
-              </button>
-            </th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>
-              <input type="text" class="form-control">
+              <input type="text" id="place" class="form-control">
             </td>
             <td>
-              <input type="text" class="form-control">
+              <input type="text" id="location" class="form-control">
             </td>
             <td>
               <input type="text" class="form-control">
@@ -167,30 +163,57 @@
               <input type="number" class="form-control">
             </td>
             <td>
-              <button class="btn btn-outline-danger delete_row">remove</button>
+              <button class="btn btn-outline-success addRowBtn">remove</button>
             </td>
+            <td>
+              <button class="btn btn-outline-danger delete_row">remove</button>
+            </td>      
           </tr>
         </tbody>
       </table>
     </div>
 
   <script>
-    $(document).ready(function() {
-
-      $('#add_row').click(function() {
-        //Add row
-        row = '';
-        row += '<tr><td><input type="text" class="form-control"></td><td ><input type="text" class="form-control"></td><td><input type="text" class="form-control"></td><td><input type="number" class="form-control"></td>';
-        row += '<td><button class="btn btn-outline-danger delete_row">remove</button></td></tr>';
-        $("tbody").append(row);
-      })
-    
-      $("#add_table").on('click', '.delete_row', function() {
-        $(this).closest('tr').remove();
-      });
-    
-    });
-    
+    $(document).ready(function () {
+          const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxkuo4NVsZ7Q_Iw975qy8Cl9aYtb7LPOTwTZhLOfOLqEtt6PY-QKvrik61ORRHw36Xyyw/exec'; // PASTE IT HERE
+      
+          // --- ADD Row Functionality (with Google Sheets update) ---
+          $("#addRowBtn").on("click", function () {
+              var place = $("#place").val();
+              var location = $("#location").val();
+      
+              if (firstName !== "" && lastName !== "") {
+                  // Send data to Google Apps Script
+                  $.ajax({
+                      url: WEB_APP_URL,
+                      data: JSON.stringify({
+                          action: "add",
+                          firstName: firstName,
+                          lastName: lastName
+                      }),
+                      type: "POST",
+                      contentType: "application/json",
+                      success: function (response) {
+                          console.log("Success:", response);
+                          // Add the row to the HTML table ONLY after successful submission
+                          var newRow = "<tr><td>" + firstName + "</td><td>" + lastName + "</td><td><button class='editBtn'>Edit</button> <button class='deleteBtn'>Delete</button></td></tr>";
+                          $("#myTable tbody").append(newRow);
+                          $("#firstName").val('');
+                          $("#lastName").val('');
+                      },
+                      error: function (xhr, status, error) {
+                          console.error("Error:", error);
+                          alert("Failed to save data to Google Sheet.");
+                      }
+                  });
+              }
+          });
+      
+          // Note: Implementing Edit and Delete involves more complex Apps Script code 
+          // to find the correct row index in the sheet before deleting it. 
+          // The 'add' functionality is the simplest to implement this way.
+      
+      });    
   </script>
   
 
