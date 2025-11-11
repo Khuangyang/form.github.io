@@ -263,7 +263,7 @@
       try {
         // Fetch full details
         await place.fetchFields({
-          fields: ['displayName', 'formattedAddress', 'rating', 'userRatingCount', 'types', 'currentOpeningHours', 'websiteURI']
+          fields: ['displayName', 'formattedAddress', 'rating', 'userRatingCount', 'types', 'regularOpeningHours', 'websiteURI']
         });
 
         let content = '<div class="info-window-content">';
@@ -282,9 +282,11 @@
           content += `<p><strong>Category:</strong> ${category}</p>`;
         }
         
-        if (place.currentOpeningHours) {
-          const isOpen = place.currentOpeningHours.isOpen();
-          content += `<p><strong>Status:</strong> ${isOpen ? '🟢 Open' : '🔴 Closed'}</p>`;
+        if (place.regularOpeningHours) {
+          const isOpen = place.regularOpeningHours.isOpen ? place.regularOpeningHours.isOpen() : null;
+          if (isOpen !== null) {
+            content += `<p><strong>Status:</strong> ${isOpen ? '🟢 Open' : '🔴 Closed'}</p>`;
+          }
         }
         
         if (place.websiteURI) {
