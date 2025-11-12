@@ -212,7 +212,7 @@
       });
     }
 
-    async function searchNearbyPlaces(location, radius = 50000) {
+    async function searchNearbyPlaces(location, radius = 500000) {
       try {
         const { places } = await google.maps.importLibrary("places");
         
@@ -223,7 +223,7 @@
             radius: radius,
           },
           includedTypes: ['tourist_attraction', 'park', 'museum'],
-          maxResultCount: 20,
+          maxResultCount: 100,
         };
 
         const { places: results } = await google.maps.places.Place.searchNearby(request);
