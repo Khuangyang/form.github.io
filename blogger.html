@@ -265,7 +265,7 @@
         await place.fetchFields({
           fields: ['displayName', 'formattedAddress', 'rating', 'userRatingCount', 'types', 'regularOpeningHours', 'websiteURI']
         });
-
+    
         let content = '<div class="info-window-content">';
         content += `<h5>${place.displayName || 'Unknown Place'}</h5>`;
         
@@ -293,14 +293,15 @@
           content += `<p><a href="${place.websiteURI}" target="_blank">Visit Website</a></p>`;
         }
         
+        // FIX: Ensure all values have defaults and are properly escaped
         const safeName = (place.displayName || 'Unknown Place').replace(/'/g, "\\'").replace(/"/g, '&quot;');
         const safeAddress = (place.formattedAddress || 'No address available').replace(/'/g, "\\'").replace(/"/g, '&quot;');
         const safeCategory = place.types && place.types.length > 0 ? place.types[0].replace(/_/g, ' ') : 'Unknown';
         const safeRating = place.rating || '';
         
-        content += `<button class="btn btn-sm btn-primary mt-2" onclick="addToTable('${safeName}', '${safeAddress}', '${safeCategory}', '${place.rating || ''}')">Add to Table</button>`;
+        content += `<button class="btn btn-sm btn-primary mt-2" onclick="addToTable('${safeName}', '${safeAddress}', '${safeCategory}', '${safeRating}')">Add to Table</button>`;
         content += '</div>';
-
+    
         infoWindow.setContent(content);
         infoWindow.setPosition(place.location);
         infoWindow.open(map);
