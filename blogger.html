@@ -223,7 +223,7 @@
             radius: radius,
           },
           includedTypes: ['tourist_attraction', 'park', 'museum'],
-          maxResultCount: 100,
+          maxResultCount: 20,
         };
 
         const { places: results } = await google.maps.places.Place.searchNearby(request);
