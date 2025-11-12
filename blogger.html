@@ -212,7 +212,7 @@
       });
     }
 
-    async function searchNearbyPlaces(location, radius = 500000) {
+    async function searchNearbyPlaces(location, radius = 50000) {
       try {
         const { places } = await google.maps.importLibrary("places");
         
