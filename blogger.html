@@ -203,7 +203,7 @@
       const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
       const { Place } = await google.maps.importLibrary("places");
 
-      // Step 2: Set the center point of the map (Mount Fuji coordinates)
+      // Step 2: Set the center point of the map Resol poshtel (Tokyo)
       const center = { lat: 35.71366141275859, lng: 139.79131272698618 };
       
       // Step 3: Create the map and display it in the element with id="map"
@@ -219,6 +219,9 @@
       // Step 5: Search for places near Mount Fuji when page loads
       // Parameters: (location, radius in meters, should we clear old markers?)
       await searchNearbyPlaces(center, 50000, true);
+      await searchNearbyPlaces({lat: 35.50525411957015, lng: 138.7600462957958}, 20000);  // Tokoko Inn (Fujikawa)
+      await searchNearbyPlaces({lat: 35.23976736201863, lng: 139.0720150882234}, 20000);  // Hot Spring Inn Hakone (Hakone)
+      await searchNearbyPlaces({lat: 35.69725760840773, lng: 139.70271239316762}, 20000);  // Hotel Livemax Shinjuku (Toyko)
 
       // Step 6: Add a click listener - when user clicks the map, search that area
       map.addListener('click', async (event) => {
