@@ -186,13 +186,13 @@
     let map;
     let infoWindow;
     let markers = []; // Array to store all markers
-
+    
     async function initMap() {
       // Load required libraries
       const { Map, InfoWindow } = await google.maps.importLibrary("maps");
       const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
       const { Place } = await google.maps.importLibrary("places");
-
+    
       // Center on Mount Fuji area
       const center = { lat: 35.3606, lng: 138.7274 };
       
@@ -201,17 +201,18 @@
         center: center,
         mapId: "DEMO_MAP_ID", // Required for Advanced Markers
       });
-
+    
       infoWindow = new InfoWindow();
-
+    
       // Search for nearby places using the new API
       await searchNearbyPlaces(center);
-
+    
       // Add click listener to the map
       map.addListener('click', async (event) => {
-        await searchNearbyPlaces(event.latLng, 5000);
-        });
-      }
+        await searchNearbyPlaces(event.latLng, 5000); // Increased from 500 to 5000 (5km)
+      });
+    }
+    
     // Function to clear all markers from the map
     function clearMarkers() {
       markers.forEach(marker => {
@@ -219,7 +220,7 @@
       });
       markers = []; // Clear the array
     }
-
+    
     async function searchNearbyPlaces(location, radius = 50000) {
       try {
         const { places } = await google.maps.importLibrary("places");
@@ -233,12 +234,14 @@
           includedTypes: ['tourist_attraction', 'shopping_mall', 'restaurant'],
           maxResultCount: 50,
         };
-
+    
         const { places: results } = await google.maps.places.Place.searchNearby(request);
+        
         // Clear existing markers before adding new ones
         clearMarkers();
         
         if (results && results.length > 0) {
+          console.log(`Found ${results.length} places`); // Debug log
           results.forEach(place => {
             createMarker(place);
           });
@@ -247,31 +250,33 @@
           if (radius < 10000 && results[0]) {
             showPlaceDetails(results[0]);
           }
+        } else {
+          console.log('No places found in this area'); // Debug log
         }
       } catch (error) {
         console.error('Error searching places:', error);
       }
     }
-
+    
     async function createMarker(place) {
       if (!place.location) return;
-
+    
       const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
-
+    
       const marker = new AdvancedMarkerElement({
         map: map,
         position: place.location,
         title: place.displayName,
       });
-      
+    
       // Add marker to our tracking array
       markers.push(marker);
-
+    
       marker.addListener('click', () => {
         showPlaceDetails(place);
       });
     }
-
+    
     async function showPlaceDetails(place) {
       try {
         // Fetch full details
