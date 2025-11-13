@@ -182,124 +182,193 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
   
   <script>
-    // Initialize the map using new Google Maps API
-    let map;
-    let infoWindow;
-    let markers = []; // Array to store all markers
+    /* ========================================
+       PART 1: GLOBAL VARIABLES
+       These variables can be used anywhere in the code
+       ======================================== */
+    
+    let map;           // Stores the Google Map object
+    let infoWindow;    // Stores the popup window that shows place details
+    let markers = [];  // Array to keep track of all map markers (pins)
+
+    /* ========================================
+       PART 2: INITIALIZE THE MAP
+       This function runs when the page loads
+       ======================================== */
     
     async function initMap() {
-      // Load required libraries
+      // Step 1: Load Google Maps libraries
+      // These are like toolboxes with different tools we need
       const { Map, InfoWindow } = await google.maps.importLibrary("maps");
       const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
       const { Place } = await google.maps.importLibrary("places");
-    
-      // Center on Mount Fuji area
+
+      // Step 2: Set the center point of the map (Mount Fuji coordinates)
       const center = { lat: 35.3606, lng: 138.7274 };
       
+      // Step 3: Create the map and display it in the element with id="map"
       map = new Map(document.getElementById("map"), {
-        zoom: 10,
-        center: center,
-        mapId: "DEMO_MAP_ID", // Required for Advanced Markers
+        zoom: 10,                    // How zoomed in the map is (1=world, 20=street)
+        center: center,              // Where the map centers
+        mapId: "DEMO_MAP_ID",        // Required for Advanced Markers
       });
-    
+
+      // Step 4: Create an info window (the popup that appears when you click markers)
       infoWindow = new InfoWindow();
-    
-      // Search for nearby places using the new API
-      await searchNearbyPlaces(center);
-    
-      // Add click listener to the map
+
+      // Step 5: Search for places near Mount Fuji when page loads
+      // Parameters: (location, radius in meters, should we clear old markers?)
+      await searchNearbyPlaces(center, 50000, true);
+
+      // Step 6: Add a click listener - when user clicks the map, search that area
       map.addListener('click', async (event) => {
-        await searchNearbyPlaces(event.latLng, 5000); // Increased from 500 to 5000 (5km)
+        console.log('Map clicked at:', event.latLng.lat(), event.latLng.lng());
+        // Search within 10km of where they clicked, DON'T clear existing markers
+        await searchNearbyPlaces(event.latLng, 10000, false);
       });
     }
+
+    /* ========================================
+       PART 3: CLEAR MARKERS FROM MAP
+       Removes all pins from the map
+       ======================================== */
     
-    // Function to clear all markers from the map
     function clearMarkers() {
+      // Loop through each marker in our markers array
       markers.forEach(marker => {
-        marker.map = null; // Remove marker from map
+        marker.map = null;  // Setting map to null removes the marker from display
       });
-      markers = []; // Clear the array
+      markers = [];  // Empty the array
     }
+
+    /* ========================================
+       PART 4: SEARCH FOR NEARBY PLACES
+       This asks Google to find places near a location
+       ======================================== */
     
-    async function searchNearbyPlaces(location, radius = 50000) {
+    async function searchNearbyPlaces(location, radius = 50000, clearOldMarkers = false) {
       try {
+        // Load the places library
         const { places } = await google.maps.importLibrary("places");
         
+        // Log to console so we can see what's happening (press F12 to see console)
+        console.log(`Searching at lat: ${location.lat}, lng: ${location.lng}, radius: ${radius}m`);
+        
+        // Create a search request object
         const request = {
+          // What information we want about each place
           fields: ['displayName', 'location', 'types', 'rating', 'userRatingCount'],
+          
+          // Where to search
           locationRestriction: {
-            center: location,
-            radius: radius,
+            center: location,    // Center point
+            radius: radius,      // How far from center (in meters)
           },
+          
+          // What types of places to find
           includedTypes: ['tourist_attraction', 'shopping_mall', 'restaurant'],
+          
+          // Maximum number of results
           maxResultCount: 50,
         };
-    
+
+        // Send the request to Google and wait for results
         const { places: results } = await google.maps.places.Place.searchNearby(request);
         
-        // Clear existing markers before adding new ones
-        clearMarkers();
+        // Should we clear old markers? (Only true on initial page load)
+        if (clearOldMarkers) {
+          clearMarkers();
+        }
         
+        // Check if we found any places
         if (results && results.length > 0) {
-          console.log(`Found ${results.length} places`); // Debug log
-          results.forEach(place => {
-            createMarker(place);
-          });
+          console.log(`Found ${results.length} places`);
           
-          // If it's a small radius search, show details of first result
+          // For each place we found, create a marker on the map
+          for (const place of results) {
+            await createMarker(place);
+          }
+          
+          // If this was a small search (user clicked map), show details of first result
           if (radius < 10000 && results[0]) {
             showPlaceDetails(results[0]);
           }
         } else {
-          console.log('No places found in this area'); // Debug log
+          // No places found
+          console.log('No places found in this area');
+          alert(`No places found within ${radius}m of this location. Try clicking in a different area.`);
         }
       } catch (error) {
+        // If something goes wrong, log it and show an alert
         console.error('Error searching places:', error);
+        alert('Error searching for places: ' + error.message);
       }
     }
+
+    /* ========================================
+       PART 5: CREATE A MARKER (PIN) ON THE MAP
+       Puts a pin on the map for each place
+       ======================================== */
     
     async function createMarker(place) {
+      // If the place doesn't have a location, skip it
       if (!place.location) return;
-    
+
+      // Load the marker library
       const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
-    
+
+      // Create a new marker
       const marker = new AdvancedMarkerElement({
-        map: map,
-        position: place.location,
-        title: place.displayName,
+        map: map,                      // Which map to put it on
+        position: place.location,      // Where to put it (lat/lng coordinates)
+        title: place.displayName,      // Text shown when hovering over marker
       });
-    
-      // Add marker to our tracking array
+
+      // Add this marker to our tracking array
       markers.push(marker);
-    
+
+      // Add a click listener - when user clicks the marker, show details
       marker.addListener('click', () => {
         showPlaceDetails(place);
       });
     }
+
+    /* ========================================
+       PART 6: SHOW PLACE DETAILS IN POPUP
+       When user clicks a marker, show info about that place
+       ======================================== */
     
     async function showPlaceDetails(place) {
       try {
-        // Fetch full details
+        // Request more detailed information about this place
         await place.fetchFields({
-          fields: ['displayName', 'formattedAddress', 'rating', 'userRatingCount', 'types', 'regularOpeningHours', 'websiteURI']
+          fields: ['displayName', 'formattedAddress', 'rating', 'userRatingCount', 
+                   'types', 'regularOpeningHours', 'websiteURI']
         });
-    
+
+        // Build HTML content for the info window
         let content = '<div class="info-window-content">';
+        
+        // Add place name
         content += `<h5>${place.displayName || 'Unknown Place'}</h5>`;
         
+        // Add rating if available
         if (place.rating) {
           content += `<p><strong>Rating:</strong> ${place.rating} ⭐ (${place.userRatingCount || 0} reviews)</p>`;
         }
         
+        // Add address if available
         if (place.formattedAddress) {
           content += `<p><strong>Address:</strong> ${place.formattedAddress}</p>`;
         }
         
+        // Add category if available
         if (place.types && place.types.length > 0) {
           const category = place.types[0].replace(/_/g, ' ');
           content += `<p><strong>Category:</strong> ${category}</p>`;
         }
         
+        // Add open/closed status if available
         if (place.regularOpeningHours) {
           const isOpen = place.regularOpeningHours.isOpen ? place.regularOpeningHours.isOpen() : null;
           if (isOpen !== null) {
@@ -307,19 +376,32 @@
           }
         }
         
+        // Add website link if available
         if (place.websiteURI) {
           content += `<p><a href="${place.websiteURI}" target="_blank">Visit Website</a></p>`;
         }
         
-        // Ensure all values have defaults and are properly escaped
-        const safeName = (place.displayName || 'Unknown Place').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        const safeAddress = (place.formattedAddress || 'No address available').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        const safeCategory = place.types && place.types.length > 0 ? place.types[0].replace(/_/g, ' ') : 'Unknown';
+        // Prepare data for the "Add to Table" button
+        // We need to escape special characters so they don't break the HTML
+        const safeName = (place.displayName || 'Unknown Place')
+          .replace(/'/g, "\\'")      // Replace single quotes
+          .replace(/"/g, '&quot;');   // Replace double quotes
+        
+        const safeAddress = (place.formattedAddress || 'No address available')
+          .replace(/'/g, "\\'")
+          .replace(/"/g, '&quot;');
+        
+        const safeCategory = place.types && place.types.length > 0 
+          ? place.types[0].replace(/_/g, ' ') 
+          : 'Unknown';
+        
         const safeRating = place.rating || '';
         
+        // Add button to add this place to the table
         content += `<button class="btn btn-sm btn-primary mt-2" onclick="addToTable('${safeName}', '${safeAddress}', '${safeCategory}', '${safeRating}')">Add to Table</button>`;
         content += '</div>';
-    
+
+        // Display the info window at the place's location
         infoWindow.setContent(content);
         infoWindow.setPosition(place.location);
         infoWindow.open(map);
@@ -328,16 +410,22 @@
       }
     }
 
-    // Function to add place info to table
+    /* ========================================
+       PART 7: ADD PLACE TO TABLE
+       Called when user clicks "Add to Table" in the info window
+       ======================================== */
+    
     function addToTable(name, address, category, rating) {
-      // Validate that we have at least name and address
+      // Validate we have required information
       if (!name || name === 'Unknown Place' || !address || address === 'No address available') {
         alert("Please fill in at least Place and Location fields.");
         return;
       }
       
+      // Find the input row (the last row with input fields)
       const $row = $('.addRowBtn').closest('tr');
       
+      // Create a new table row with the place information
       var newRow = '<tr>' +
           '<td class="place">' + name + '</td>' +
           '<td class="location">' + address + '</td>' +
@@ -347,6 +435,7 @@
           '<td><button class="btn btn-outline-danger delete_row">remove</button></td>' +
           '</tr>';
       
+      // Add the new row before the input row
       $row.before(newRow);
       
       // Close the info window
@@ -355,19 +444,28 @@
       }
     }
 
-    // Wait for Google Maps to load before initializing
+    /* ========================================
+       PART 8: WAIT FOR PAGE TO LOAD, THEN INITIALIZE MAP
+       ======================================== */
+    
     window.addEventListener('load', () => {
       initMap();
     });
 
-    // Table functionality
+    /* ========================================
+       PART 9: TABLE FUNCTIONALITY (jQuery)
+       Handles adding and removing rows in the table
+       ======================================== */
+    
     $(document).ready(function () {
+      // Your Google Apps Script URL
       const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxkuo4NVsZ7Q_Iw975qy8Cl9aYtb7LPOTwTZhLOfOLqEtt6PY-QKvrik61ORRHw36Xyyw/exec';
       
+      // CLICK HANDLER FOR "ADD" BUTTON
       $(document).on("click", ".addRowBtn", function () {
         const $row = $(this).closest('tr');
         
-        // Check if this row has inputs or just text
+        // Find input fields in this row
         const $placeInput = $row.find('input.place');
         const $locationInput = $row.find('input.location');
         const $categoryInput = $row.find('input.category');
@@ -375,8 +473,9 @@
         
         let place, location, category, rating;
         
+        // Check if this row has input fields or just text
         if ($placeInput.length > 0) {
-          // This is an input row (the bottom row)
+          // This is the input row (bottom row with text boxes)
           place = $placeInput.val();
           location = $locationInput.val();
           category = $categoryInput.val();
@@ -389,8 +488,9 @@
           rating = $row.find('td.rating').text();
         }
 
+        // Validate we have place and location
         if (place !== "" && location !== "") {
-          // Use fetch with GET method and query parameters (works with Google Apps Script)
+          // Create URL parameters
           const params = new URLSearchParams({
               action: "add",
               place: place,
@@ -399,15 +499,17 @@
               rating: rating
           });
           
+          // Send data to Google Sheets
           fetch(WEB_APP_URL + '?' + params.toString(), {
               method: 'GET',
-              mode: 'no-cors' // This bypasses CORS but won't return response
+              mode: 'no-cors'  // Required for Google Apps Script
           })
           .then(() => {
               console.log("Data sent to Google Sheets");
               
-              // If this was from an input row, create a new display row and clear inputs
+              // If this was from the input row
               if ($placeInput.length > 0) {
+                // Create a new display row
                 var newRow = '<tr>' +
                     '<td>' + place + '</td>' +
                     '<td>' + location + '</td>' +
@@ -416,10 +518,12 @@
                     '<td><button class="btn btn-outline-danger delete_row">remove</button></td>' +
                     '</tr>';
                 
+                // Add it before the input row
                 $row.before(newRow);
+                // Clear the input fields
                 $row.find('input').val('');
               } else {
-                // If this was from a map-added row, just remove the add button
+                // If this was from a map-added row, remove the add button
                 $(this).remove();
               }
           })
@@ -431,14 +535,15 @@
         }
       });
 
-      // Delete row functionality
+      // CLICK HANDLER FOR "REMOVE" BUTTON
       $(document).on('click', '.delete_row', function() {
+        // Remove the entire row
         $(this).closest('tr').remove();
       });
     });
   </script>
 
-  <!-- Google Maps API -->
+  <!-- Google Maps API Loader -->
   <script>
     (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.googleapis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
       key: "AIzaSyDCcPel8TpdWZrbZj9IYP5_UOZLc5gPyGU",
